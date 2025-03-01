@@ -11,6 +11,8 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import android.telephony.TelephonyManager
 import android.telephony.PhoneStateListener
+import android.os.Handler
+import android.os.Looper
 
 class CallServicePlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var channel: MethodChannel
@@ -45,6 +47,8 @@ class CallServicePlugin : FlutterPlugin, MethodCallHandler {
         callHandled = false
         callStartTime = 0
 
+        val lastCallId = getLastCallId()
+
         // Register Phone State Listener
         phoneStateListener = object : PhoneStateListener() {
             override fun onCallStateChanged(state: Int, incomingNumber: String?) {
@@ -56,16 +60,28 @@ class CallServicePlugin : FlutterPlugin, MethodCallHandler {
                         if (callStartTime > 0 && !callHandled) {
                             callHandled = true
                             val callDuration = (System.currentTimeMillis() - callStartTime) / 1000
-                            val lastCallDuration = getLastCallDuration() / 1000
-
-                            result.success(
-                                mapOf(
-                                    "totalCallDuration" to callDuration,
-                                    "activeCallDuration" to lastCallDuration
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                val lastCallDuration = getJustMadeCallDuration(lastCallId) / 1000
+    
+                                result.success(
+                                    mapOf(
+                                        "totalCallDuration" to callDuration,
+                                        "activeCallDuration" to lastCallDuration
+                                    )
                                 )
-                            )
+    
+                                unregisterPhoneStateListener()
+                            }, 1000)
+                            // val lastCallDuration = getJustMadeCallDuration(lastCallId) / 1000
 
-                            unregisterPhoneStateListener()
+                            // result.success(
+                            //     mapOf(
+                            //         "totalCallDuration" to callDuration,
+                            //         "activeCallDuration" to lastCallDuration
+                            //     )
+                            // )
+
+                            // unregisterPhoneStateListener()
                         }
                     }
                 }
@@ -91,23 +107,98 @@ class CallServicePlugin : FlutterPlugin, MethodCallHandler {
         }
     }
 
-    private fun getLastCallDuration(): Long {
+    private fun getJustMadeCallDuration(lastCallId: Long): Long {
         return try {
             context.contentResolver.query(
                 CallLog.Calls.CONTENT_URI,
-                arrayOf(CallLog.Calls.DURATION),
-                null, null, "${CallLog.Calls.DATE} DESC"
+                arrayOf(CallLog.Calls._ID, CallLog.Calls.DURATION, CallLog.Calls.TYPE),
+                null, null,
+                "${CallLog.Calls.DATE} DESC"
+            )?.use { cursor ->
+                while (cursor.moveToNext()) {
+                    val callId = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls._ID))
+                    val callType = cursor.getInt(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE))
+                    val duration = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DURATION)) * 1000
+    
+                    if (callId > lastCallId) {
+                        return when (callType) {
+                            CallLog.Calls.OUTGOING_TYPE -> duration
+                            CallLog.Calls.MISSED_TYPE, CallLog.Calls.REJECTED_TYPE, CallLog.Calls.BLOCKED_TYPE -> -1
+                            else -> -1
+                        }
+                    }
+                }
+                -1
+            } ?: -1
+        } catch (e: SecurityException) {
+            -1
+        }
+    }    
+
+    private fun getLastCallId(): Long {
+        return try {
+            context.contentResolver.query(
+                CallLog.Calls.CONTENT_URI,
+                arrayOf(CallLog.Calls._ID),
+                null,
+                null,
+                "${CallLog.Calls.DATE} DESC"
             )?.use { cursor ->
                 if (cursor.moveToFirst()) {
-                    cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DURATION)) * 1000
+                    cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls._ID))
                 } else {
-                    0
+                    -1
                 }
-            } ?: 0
+            } ?: -1
         } catch (e: SecurityException) {
-            0
+            -1
         }
     }
+    
+    
+    // private fun getLastCallDuration(): Long {
+    //     return try {
+    //         context.contentResolver.query(
+    //             CallLog.Calls.CONTENT_URI,
+    //             arrayOf(CallLog.Calls.DURATION),
+    //             null, null, "${CallLog.Calls.DATE} DESC"
+    //         )?.use { cursor ->
+    //             if (cursor.moveToFirst()) {
+    //                 cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DURATION)) * 1000
+    //             } else {
+    //                 -1
+    //             }
+    //         } ?: -1
+    //     } catch (e: SecurityException) {
+    //         -1
+    //     }
+    // }
+
+    // private fun getLastCallDuration(): Long {
+    //     return try {
+    //         context.contentResolver.query(
+    //             CallLog.Calls.CONTENT_URI,
+    //             arrayOf(CallLog.Calls.DURATION, CallLog.Calls.TYPE),
+    //             null, null, "${CallLog.Calls.DATE} DESC"
+    //         )?.use { cursor ->
+    //             if (cursor.moveToFirst()) {
+    //                 val callType = cursor.getInt(cursor.getColumnIndexOrThrow(CallLog.Calls.TYPE))
+    //                 val duration = cursor.getLong(cursor.getColumnIndexOrThrow(CallLog.Calls.DURATION)) * 1000
+    
+    //                 return when (callType) {
+    //                     CallLog.Calls.OUTGOING_TYPE -> duration
+    //                     CallLog.Calls.MISSED_TYPE, CallLog.Calls.REJECTED_TYPE, CallLog.Calls.BLOCKED_TYPE -> 0
+    //                     else -> -1 
+    //                 }
+    //             } else {
+    //                 -1
+    //             }
+    //         } ?: -1
+    //     } catch (e: SecurityException) {
+    //         -1
+    //     }
+    // }
+    
 
     private fun unregisterPhoneStateListener() {
         phoneStateListener?.let {
