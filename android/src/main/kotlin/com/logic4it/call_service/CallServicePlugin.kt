@@ -60,8 +60,8 @@ class CallServicePlugin : FlutterPlugin, MethodCallHandler {
 
                             result.success(
                                 mapOf(
-                                    "callDuration" to callDuration,
-                                    "lastCallDuration" to lastCallDuration
+                                    "totalCallDuration" to callDuration,
+                                    "activeCallDuration" to lastCallDuration
                                 )
                             )
 

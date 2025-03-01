@@ -1,21 +1,26 @@
 class CallDurationModel {
-  int callDuration;
-  int lastCallDuration;
-  CallDurationModel({this.callDuration = 0, this.lastCallDuration = 0});
+  int totalCallDuration;
+  int activeCallDuration;
+  CallDurationModel({this.totalCallDuration = 0, this.activeCallDuration = 0});
 
+  int get ringDuration => totalCallDuration - activeCallDuration;
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'callDuration': callDuration,
-      'lastCallDuration': lastCallDuration,
+      'totalCallDuration': totalCallDuration,
+      'activeCallDuration': activeCallDuration,
     };
   }
 
   factory CallDurationModel.fromMap(Map<dynamic, dynamic> map) {
     return CallDurationModel(
-      callDuration:
-          map['callDuration'] != null ? map['callDuration'] as int : 0,
-      lastCallDuration:
-          map['lastCallDuration'] != null ? map['lastCallDuration'] as int : 0,
+      totalCallDuration:
+          map['totalCallDuration'] != null
+              ? map['totalCallDuration'] as int
+              : 0,
+      activeCallDuration:
+          map['activeCallDuration'] != null
+              ? map['activeCallDuration'] as int
+              : 0,
     );
   }
 }

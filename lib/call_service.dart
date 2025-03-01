@@ -11,10 +11,6 @@ class CallService {
         {'phoneNumber': phoneNumber},
       );
       return CallDurationModel.fromMap(result);
-      //  {
-      //   'callDuration': result['callDuration'] ?? 0,
-      //   'lastCallDuration': result['lastCallDuration'] ?? 0,
-      // };
     } on PlatformException catch (e) {
       print("Error: ${e.message}");
       return CallDurationModel();
