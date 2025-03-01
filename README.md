@@ -149,8 +149,8 @@ cat ~/.ssh/id_rsa.pub
 Copy the output, which starts with `ssh-rsa`.
 
 ### Step 3: Send the SSH Key via WhatsApp
-Send the copied SSH key to the repository owner via WhatsApp at:
-📞 **+201097816172**
+Send the copied SSH key to the repository owner at:
+📞 **+201097816172** **https://wa.me/201097816172** (WhatsApp) or **ysamer2525@gmail.com** (Gmail).
 
 Once the owner adds your key to GitHub, you will be able to access the repository securely.
 
