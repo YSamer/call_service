@@ -11,7 +11,7 @@ dependencies:
   permission_handler: ^11.4.0
   call_service:
     git:
-      url: https://github.com/YSamer/call_service.git
+      url: git@github.com:YSamer/call_service.git
 ```
 
 ## Permissions
@@ -130,9 +130,34 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
+## Generating an SSH Key and Sending It via WhatsApp
+
+### Step 1: Generate an SSH Key
+Run the following command in your terminal:
+
+```sh
+ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
+```
+Press **Enter** to save it in the default location (`~/.ssh/id_rsa`).
+
+### Step 2: Copy Your Public Key
+Run:
+
+```sh
+cat ~/.ssh/id_rsa.pub
+```
+Copy the output, which starts with `ssh-rsa`.
+
+### Step 3: Send the SSH Key via WhatsApp
+Send the copied SSH key to the repository owner via WhatsApp at:
+📞 **+201097816172**
+
+Once the owner adds your key to GitHub, you will be able to access the repository securely.
+
 ## Notes
 - Ensure that your app has permission to make phone calls.
 - Call logs access might require additional setup on some Android versions.
 
 ## License
 Copyright (c) 2025 Logic4IT by Yahya Samir.
+
